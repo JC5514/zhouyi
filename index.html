@@ -96,6 +96,7 @@
         let inputCount = 0;
         let upper = 0;
         let lower = 0;
+        let currentGua = [];
 
         document.getElementById('yiForm').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -106,32 +107,52 @@
                 handleNumberMethod();
             }
         });
-
+        
         function handleTextMethod() {
-            const userInput = document.getElementById('userInput').value;
-            const yinOrYang = userInput.charCodeAt(inputCount % userInput.length) % 2 === 0 ? 2 : 1;
-            if (inputCount < 3) {
-                lower += yinOrYang * Math.pow(2, inputCount);
-            } else if (inputCount < 5) {
-                upper += yinOrYang * Math.pow(2, inputCount - 3);
-            } else {
-                // 用户输入完成，显示随机卦名
-                upper += yinOrYang * Math.pow(2, inputCount - 3);
-                showLoadingAnimation();
-                setTimeout(() => {
-                    document.getElementById('userInput').disabled = true;
-                    const randomGuaIndex = Math.floor(Math.random() * guaNames.length);
-                    document.getElementById('result').innerHTML = '当前卦为：' + guaNames[randomGuaIndex];
-                    hideLoadingAnimation();
-                    inputCount = 0;
-                    upper = 0;
-                    lower = 0;
-                    return;
-                }, 2000);
+          const userInput = document.getElementById('userInput').value.trim();
+          if (!userInput.match(/^[01]$/)) {
+            alert('请输入数字0或1！');
+            return;
+          }
+          const yinOrYang = parseInt(userInput);
+          if (inputCount < 3) {
+            lower += yinOrYang * Math.pow(2, inputCount);
+          } else if (inputCount < 5) {
+            upper += yinOrYang * Math.pow(2, inputCount - 3);
+          } else {
+            // 用户输入完成，生成卦象
+            upper += yinOrYang * Math.pow(2, inputCount - 3);
+            currentGua = [upper, lower];
+            const numYang = currentGua.filter(line => line === 2).length;
+            const numYin = currentGua.filter(line => line === 1).length;
+            if (numYang !== 2 && numYin !== 2) {
+              alert('卦的上下爻不符合规范，请重新输入！');
+              inputCount = 0;
+              upper = 0;
+              lower = 0;
+              currentGua = [];
+              return;
             }
-            displayLine(yinOrYang);
-            inputCount++;
-            document.getElementById('userInput').value = '';
+            const guaIndex = parseInt(currentGua.reverse().join(''), 2);
+            if (guaIndex < 0 || guaIndex > 63) {
+              alert('生成的卦不在卦序中，请重新输入！');
+              inputCount = 0;
+              upper = 0;
+              lower = 0;
+              currentGua = [];
+              return;
+            }
+            document.getElementById('userInput').disabled = true;
+            const guaName = guaNames[guaIndex];
+            document.getElementById('result').innerHTML = '当前卦为：' + guaName;
+            inputCount = 0;
+            upper = 0;
+            lower = 0;
+            currentGua = [];
+          }
+          displayLine(yinOrYang);
+          inputCount++;
+          document.getElementById('userInput').value = '';
         }
 
         function handleNumberMethod() {
